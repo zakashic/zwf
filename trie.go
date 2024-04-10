@@ -20,7 +20,7 @@ func (n *node) String() string {
 // matchChild 匹配第一个节点 用于添加
 func (n *node) matchChild(part string) *node {
 	for _, child := range n.children {
-		if child.part == part || child.isWild {
+		if child.part == part || child.isWild || part[0] == '*' || part[0] == ':' {
 			return child
 		}
 	}
@@ -38,24 +38,32 @@ func (n *node) matchChildren(part string) []*node {
 	return nodes
 }
 
+// insert 添加路由到前缀树 逐层匹配 如果不存在则添加节点 直到最终节点 添加pattern到这个节点 pattern不为空字符串也用于判断是否在最终节点
 //func (n *node) insert(pattern string, parts []string, height int) {
 //	if len(parts) == height {
 //		n.pattern = pattern
 //		return
 //	}
-//
 //	part := parts[height]
 //	child := n.matchChild(part)
 //	if child == nil {
 //		child = &node{part: part, isWild: part[0] == ':' || part[0] == '*'}
 //		n.children = append(n.children, child)
+//	} else {
+//		if child.part[0] == '*' || part[0] == '*' {
+//			panic(child.part + " existed, routing conflict!")
+//		}
+//		if child.part[0] == ':' || part[0] == ':' {
+//			if len(parsePattern(child.pattern)) == len(parts) {
+//				panic(child.part + " existed, routing conflict!")
+//			}
+//		}
 //	}
-//
 //	child.insert(pattern, parts, height+1)
 //}
 
 // insert 添加路由到前缀树 逐层匹配 如果不存在则添加节点 直到最终节点 添加pattern到这个节点 pattern不为空字符串也用于判断是否在最终节点
-// todo fix 路由冲突问题 /a/:b /a/c 冲突
+// fix 路由冲突问题 例如/a/:b /a/* /a/c
 func (n *node) insert(pattern string, parts []string, height int) {
 	currentNode := n
 	for height < len(parts) {
@@ -64,6 +72,15 @@ func (n *node) insert(pattern string, parts []string, height int) {
 		if child == nil {
 			child = &node{part: part, isWild: part[0] == ':' || part[0] == '*'}
 			currentNode.children = append(currentNode.children, child)
+		} else {
+			if child.part[0] == '*' || part[0] == '*' {
+				panic(child.part + " existed, routing conflict!")
+			}
+			if child.part[0] == ':' || part[0] == ':' {
+				if len(parsePattern(child.pattern)) == len(parts) {
+					panic(child.part + " existed, routing conflict!")
+				}
+			}
 		}
 
 		currentNode = child

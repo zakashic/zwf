@@ -20,11 +20,22 @@ func TestDefault(t *testing.T) {
 
 	v1 := r.Group("/v1")
 	{
+		v1.GET("/hello/:name", func(c *Context) {
+			c.String(http.StatusOK, "hello %s", c.Param("name"))
+		})
+
 		v1.GET("/hello", func(c *Context) {
 			c.String(http.StatusOK, "hello")
 		})
+	}
 
-		v1.GET("/hello/:name", func(c *Context) {
+	v2 := r.Group("/v2")
+	{
+		v2.GET("/a/c", func(c *Context) {
+			c.String(http.StatusOK, "hello")
+		})
+
+		v2.GET("/a/:b", func(c *Context) {
 			c.String(http.StatusOK, "hello %s", c.Param("name"))
 		})
 	}
